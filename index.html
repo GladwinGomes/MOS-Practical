@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sysadmin Toolkit Web Suite</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js for real-time telemetry graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Tone.js for optional subtle system audio feedback -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              500: '#10b981',
+              600: '#059669',
+            },
+            term: {
+              dark: '#0f172a',
+              card: '#1e293b',
+              border: '#334155'
+            }
+          },
+          fontFamily: {
+            mono: ['JetBrains Mono', 'Fira Code', 'Menlo', 'monospace'],
+            sans: ['Inter', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+    .glow-accent {
+      box-shadow: 0 0 20px -5px rgba(16, 185, 129, 0.3);
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col md:flex-row overflow-x-hidden selection:bg-emerald-500 selection:text-slate-900">
+
+  <!-- Sidebar Navigation -->
+  <aside class="w-full md:w-64 bg-slate-900 border-r border-slate-800 flex-shrink-0 flex flex-col justify-between z-20">
+    <div>
+      <!-- Branding & Host info -->
+      <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400">
+            <i data-lucide="terminal" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h1 class="text-sm font-bold tracking-wide text-slate-100 uppercase">SYSADMIN OS</h1>
+            <p class="text-xs text-slate-400 font-mono">gladwin-MS-7D90</p>
+          </div>
+        </div>
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-950 text-emerald-300 border border-emerald-800">
+          <span class="w-1.5 h-1.5 mr-1.5 bg-emerald-400 rounded-full animate-ping"></span> Live
+        </span>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="p-3 space-y-1.5">
+        <button onclick="switchTab('health')" id="nav-health" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition text-emerald-400 bg-slate-800/80 border border-slate-700">
+          <div class="flex items-center space-x-3">
+            <i data-lucide="activity" class="w-4 h-4"></i>
+            <span>System Health</span>
+          </div>
+          <span id="badge-health" class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono">OK</span>
+        </button>
+
+        <button onclick="switchTab('organizer')" id="nav-organizer" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition">
+          <div class="flex items-center space-x-3">
+            <i data-lucide="folder-cog" class="w-4 h-4"></i>
+            <span>Bulk Organizer</span>
+          </div>
+          <span class="text-[10px] text-slate-500 font-mono">~/messy</span>
+        </button>
+
+        <button onclick="switchTab('backup')" id="nav-backup" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition">
+          <div class="flex items-center space-x-3">
+            <i data-lucide="hard-drive-download" class="w-4 h-4"></i>
+            <span>Backup Auto</span>
+          </div>
+          <span id="backup-badge-count" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">0</span>
+        </button>
+
+        <button onclick="switchTab('logs')" id="nav-logs" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition">
+          <div class="flex items-center space-x-3">
+            <i data-lucide="file-text" class="w-4 h-4"></i>
+            <span>Log Cleaner</span>
+          </div>
+          <span id="nav-err-badge" class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono">Report</span>
+        </button>
+
+        <button onclick="switchTab('scripts')" id="nav-scripts" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition">
+          <div class="flex items-center space-x-3">
+            <i data-lucide="code" class="w-4 h-4"></i>
+            <span>Script Inspector</span>
+          </div>
+          <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">5 Scripts</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Quick Audio Mute & Notification Status -->
+    <div class="p-4 border-t border-slate-800 bg-slate-900/50">
+      <div class="flex items-center justify-between text-xs text-slate-400">feni 
+          <i data-lucide="volume-2" class="w-4 h-4" id="audio-icon"></i>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Container -->
+  <main class="flex-1 flex flex-col h-screen overflow-y-auto">
+    <!-- Top Bar -->
+    <header class="h-16 border-b border-slate-800 bg-slate-900/60 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-10">
+      <div class="flex items-center space-x-4">
+        <h2 id="section-title" class="text-lg font-bold text-slate-100 flex items-center gap-2">
+          <i data-lucide="activity" class="w-5 h-5 text-emerald-400"></i> System Health Monitor
+        </h2>
+      </div>
+      <div class="flex items-center space-x-3">
+        <!-- Interactive Terminal Modal Button -->
+        <button onclick="toggleTerminalModal()" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 transition">
+          <i data-lucide="terminal" class="w-3.5 h-3.5 text-emerald-400"></i> Interactive Shell
+        </button>
+        <!-- Quick Git Push Info Modal -->
+        <button onclick="showModal('git-modal')" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg shadow-sm transition">
+          <i data-lucide="git-branch" class="w-3.5 h-3.5"></i> Git Push Guide
+        </button>
+      </div>
+    </header>
+
+    <!-- Global Toast Banner -->
+    <div id="toast-banner" class="hidden mx-6 mt-4 p-3 bg-slate-900 border border-emerald-500/40 rounded-xl shadow-lg flex items-center justify-between text-sm">
+      <div class="flex items-center gap-2.5">
+        <i data-lucide="info" class="w-4 h-4 text-emerald-400"></i>
+        <span id="toast-text" class="text-slate-200">Operation completed successfully.</span>
+      </div>
+      <button onclick="hideToast()" class="text-slate-500 hover:text-slate-300">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <!-- VIEW 1: SYSTEM HEALTH MONITOR -->
+    <section id="view-health" class="p-6 space-y-6">
+      <!-- Hardware Telemetry Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- CPU Card -->
+        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl relative overflow-hidden">
+          <div class="flex justify-between items-start mb-3">
+            <div>
+              <p class="text-xs font-mono text-slate-400 uppercase tracking-wider">CPU Watchdog (/proc/stat)</p>
+              <h3 class="text-2xl font-black font-mono text-slate-100 mt-1" id="val-cpu">24%</h3>
+            </div>
+            <div id="badge-cpu-status" class="px-2 py-0.5 rounded text-xs font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+              Normal
+            </div>
+          </div>
+          <!-- Progress bar -->
+          <div class="w-full bg-slate-800 rounded-full h-2 mb-3 overflow-hidden">
+            <div id="bar-cpu" class="bg-emerald-500 h-2 rounded-full transition-all duration-700" style="width: 24%"></div>
+          </div>
+          <div class="flex justify-between items-center text-xs text-slate-500 font-mono">
+            <span>Threshold: <strong class="text-slate-400">80%</strong></span>
+            <span>Cores: 8 @ 3.4GHz</span>
+          </div>
+        </div>
+
+        <!-- RAM Card -->
+        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl relative overflow-hidden">
+          <div class="flex justify-between items-start mb-3">
+            <div>
+              <p class="text-xs font-mono text-slate-400 uppercase tracking-wider">RAM Usage (free)</p>
+              <h3 class="text-2xl font-black font-mono text-slate-100 mt-1" id="val-ram">42%</h3>
+            </div>
+            <div id="badge-ram-status" class="px-2 py-0.5 rounded text-xs font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+              Normal
+            </div>
+          </div>
+          <!-- Progress bar -->
+          <div class="w-full bg-slate-800 rounded-full h-2 mb-3 overflow-hidden">
+            <div id="bar-ram" class="bg-emerald-500 h-2 rounded-full transition-all duration-700" style="width: 42%"></div>
+          </div>
+          <div class="flex justify-between items-center text-xs text-slate-500 font-mono">
+            <span>Threshold: <strong class="text-slate-400">80%</strong></span>
+            <span>6.7 GB / 16.0 GB</span>
+          </div>
+        </div>
+
+        <!-- DISK Card -->
+        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl relative overflow-hidden">
+          <div class="flex justify-between items-start mb-3">
+            <div>
+              <p class="text-xs font-mono text-slate-400 uppercase tracking-wider">Root Disk (df /)</p>
+              <h3 class="text-2xl font-black font-mono text-slate-100 mt-1" id="val-disk">58%</h3>
+            </div>
+            <div id="badge-disk-status" class="px-2 py-0.5 rounded text-xs font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+              Normal
+            </div>
+          </div>
+          <!-- Progress bar -->
+          <div class="w-full bg-slate-800 rounded-full h-2 mb-3 overflow-hidden">
+            <div id="bar-disk" class="bg-emerald-500 h-2 rounded-full transition-all duration-700" style="width: 58%"></div>
+          </div>
+          <div class="flex justify-between items-center text-xs text-slate-500 font-mono">
+            <span>Threshold: <strong class="text-slate-400">85%</strong></span>
+            <span>284 GB / 512 GB</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Realtime Chart & Log Watchdog Output -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Real-time Chart -->
+        <div class="lg:col-span-2 bg-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h4 class="text-sm font-semibold text-slate-200">Real-Time Telemetry Stream</h4>
+              <p class="text-xs text-slate-500">Updated every 2.5 seconds (Simulating /proc/stat differential calculation)</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="injectLoadSpike()" class="px-2.5 py-1 text-xs bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-lg transition font-mono">
+                Simulate Load Spike
+              </button>
+            </div>
+          </div>
+          <div class="h-64 w-full relative">
+            <canvas id="healthChart"></canvas>
+          </div>
+        </div>
+
+        <!-- health_monitor.log live append feed -->
+        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-col">
+          <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-800">
+            <div class="flex items-center gap-2">
+              <i data-lucide="file-terminal" class="w-4 h-4 text-emerald-400"></i>
+              <span class="text-xs font-mono text-slate-300 font-bold">~/health_monitor.log</span>
+            </div>
+            <button onclick="clearWatchdogLog()" class="text-xs text-slate-500 hover:text-slate-300 font-mono">Clear</button>
+          </div>
+          <div id="watchdog-log-stream" class="flex-1 bg-slate-950 p-3 rounded-xl font-mono text-[11px] text-slate-400 overflow-y-auto space-y-1.5 max-h-64 border border-slate-800/80">
+            <!-- Dynamic Log Appends -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: BULK FILE ORGANIZER -->
+    <section id="view-organizer" class="hidden p-6 space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+              <i data-lucide="folder-tree" class="w-5 h-5 text-emerald-400"></i> Virtual Filesystem Organizer
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">
+              Linear classification by file extension categories or date timestamps (<code class="text-emerald-400 font-mono">YYYY-MM</code>).
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="populateMessyFolder()" class="px-3 py-1.5 text-xs font-mono bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition flex items-center gap-1.5">
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Seed ~/messy Folder
+            </button>
+            <button onclick="resetVirtualFS()" class="px-3 py-1.5 text-xs font-mono bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-lg transition">
+              Reset
+            </button>
+          </div>
+        </div>
+
+        <!-- Controls Row -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6">
+          <div>
+            <label class="block text-xs font-mono text-slate-400 mb-1.5">TARGET DIRECTORY</label>
+            <input type="text" id="org-folder-input" value="~/messy" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="block text-xs font-mono text-slate-400 mb-1.5">ORGANIZATION MODE</label>
+            <select id="org-mode-select" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-emerald-500">
+              <option value="type">By Extension Type (Images, Docs, Audio, etc.)</option>
+              <option value="date">By File Date (YYYY-MM)</option>
+            </select>
+          </div>
+          <div class="flex items-end">
+            <button id="btn-run-organizer" onclick="executeFileOrganizer()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-900 font-bold px-4 py-2 rounded-lg text-xs font-mono transition flex items-center justify-center gap-2">
+              <i data-lucide="play" class="w-4 h-4"></i> Run ./file_organizer.sh
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Current State Display: Unorganized vs Organized Tree -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Flat Unorganized File List -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-xs font-mono font-semibold text-slate-300 flex items-center gap-2">
+              <i data-lucide="folder-open" class="w-4 h-4 text-amber-400"></i> Source: <span id="source-folder-label" class="text-slate-400">~/messy</span>
+            </span>
+            <span id="raw-file-count" class="text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400">8 files</span>
+          </div>
+          <div id="unorganized-files-container" class="space-y-2 max-h-80 overflow-y-auto pr-1">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- Classified Tree / Result -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-xs font-mono font-semibold text-slate-300 flex items-center gap-2">
+              <i data-lucide="layers" class="w-4 h-4 text-emerald-400"></i> Resulting Hierarchy Structure
+            </span>
+            <span id="org-status-badge" class="text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400">Awaiting Run</span>
+          </div>
+          <div id="organized-tree-container" class="space-y-3 max-h-80 overflow-y-auto font-mono text-xs text-slate-400 pr-1">
+            <div class="p-8 text-center text-slate-600">
+              Click "Run ./file_organizer.sh" to process files.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: BACKUP AUTOMATION -->
+    <section id="view-backup" class="hidden p-6 space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Backup Configuration Form -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+          <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2 pb-2 border-b border-slate-800">
+            <i data-lucide="shield-alert" class="w-4 h-4 text-emerald-400"></i> Backup Configuration
+          </h3>
+          <div>
+            <label class="block text-xs font-mono text-slate-400 mb-1">SOURCE DIRECTORY</label>
+            <input type="text" id="backup-src" value="~/projects/production" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-200">
+          </div>
+          <div>
+            <label class="block text-xs font-mono text-slate-400 mb-1">DESTINATION DIRECTORY</label>
+            <input type="text" id="backup-dest" value="~/backups" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-200">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-mono text-slate-400 mb-1">GZIP AFTER</label>
+              <div class="flex items-center gap-1">
+                <input type="number" id="backup-compress-days" value="1" min="1" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-200">
+                <span class="text-xs text-slate-500 font-mono">days</span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-mono text-slate-400 mb-1">DELETE AFTER</label>
+              <div class="flex items-center gap-1">
+                <input type="number" id="backup-delete-days" value="7" min="1" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-200">
+                <span class="text-xs text-slate-500 font-mono">days</span>
+              </div>
+            </div>
+          </div>
+          <div class="pt-2">
+            <button onclick="executeBackupJob()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-900 font-bold px-4 py-2.5 rounded-lg text-xs font-mono transition flex items-center justify-center gap-2">
+              <i data-lucide="archive" class="w-4 h-4"></i> Trigger Instant Backup
+            </button>
+          </div>
+        </div>
+
+        <!-- Backup History & Log Viewer -->
+        <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+              <div>
+                <h4 class="text-sm font-semibold text-slate-200">Backup Archives & Rotation Status</h4>
+                <p class="text-xs text-slate-500">Live reflection of `~/backups` storage</p>
+              </div>
+              <button onclick="simulateOldBackups()" class="text-xs font-mono px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700">
+                Simulate Aging Files
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs font-mono">
+                <thead>
+                  <tr class="text-slate-500 border-b border-slate-800">
+                    <th class="pb-2">Archive Name</th>
+                    <th class="pb-2">Size</th>
+                    <th class="pb-2">Age</th>
+                    <th class="pb-2">Format</th>
+                    <th class="pb-2 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="backup-table-body" class="divide-y divide-slate-800/60 text-slate-300">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Log stream excerpt -->
+          <div class="mt-4 pt-3 border-t border-slate-800">
+            <p class="text-[11px] font-mono text-slate-400 mb-1.5 flex items-center gap-1.5">
+              <i data-lucide="terminal" class="w-3.5 h-3.5 text-emerald-400"></i> ~/backups/backup.log (tail)
+            </p>
+            <div id="backup-log-tail" class="bg-slate-950 p-2.5 rounded-lg text-[11px] font-mono text-slate-400 space-y-1 max-h-24 overflow-y-auto">
+              [System Ready]
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: LOG CLEANER & REPORT -->
+    <section id="view-logs" class="hidden p-6 space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Controls & Input -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+              <i data-lucide="filter" class="w-4 h-4 text-emerald-400"></i> Log Parameters
+            </h3>
+            <button onclick="loadSampleLogs()" class="text-xs font-mono text-emerald-400 hover:underline">
+              Load Sample Log
+            </button>
+          </div>
+          <div>
+            <label class="block text-xs font-mono text-slate-400 mb-1">TARGET LOG FILE</label>
+            <input type="text" id="log-target-path" value="/var/log/app_service.log" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-200">
+          </div>
+          <div>
+            <label class="block text-xs font-mono text-slate-400 mb-1">DAYS TO KEEP (-d)</label>
+            <input type="number" id="log-retention-days" value="7" min="1" max="90" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-200">
+          </div>
+          <div>
+            <label class="block text-xs font-mono text-slate-400 mb-1">RAW LOG CONTENT</label>
+            <textarea id="raw-log-input" rows="8" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-[11px] font-mono text-slate-300 resize-none focus:outline-none focus:border-emerald-500"></textarea>
+          </div>
+          <button onclick="executeLogCleaner()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-900 font-bold px-4 py-2.5 rounded-lg text-xs font-mono transition flex items-center justify-center gap-2">
+            <i data-lucide="scissors" class="w-4 h-4"></i> Execute ./log_cleaner.sh
+          </button>
+        </div>
+
+        <!-- Generated Report & Analysis -->
+        <div class="lg:col-span-2 space-y-6">
+          <!-- Summary Metrics Cards -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+              <span class="text-[11px] font-mono text-slate-400">INITIAL LINES</span>
+              <p id="metric-lines-before" class="text-xl font-bold font-mono text-slate-100 mt-1">0</p>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+              <span class="text-[11px] font-mono text-slate-400">KEPT LINES</span>
+              <p id="metric-lines-after" class="text-xl font-bold font-mono text-emerald-400 mt-1">0</p>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+              <span class="text-[11px] font-mono text-slate-400">ERRORS FOUND</span>
+              <p id="metric-errors-count" class="text-xl font-bold font-mono text-rose-400 mt-1">0</p>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+              <span class="text-[11px] font-mono text-slate-400">WARNINGS</span>
+              <p id="metric-warns-count" class="text-xl font-bold font-mono text-amber-400 mt-1">0</p>
+            </div>
+          </div>
+
+          <!-- Top Recurring Errors Table -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+              <span class="text-xs font-mono font-bold text-slate-200 uppercase tracking-wider">Top Recurring Issues (awk | sort | uniq -c)</span>
+              <span class="text-xs font-mono text-slate-400">Top 5 grouped</span>
+            </div>
+            <div id="recurring-issues-container" class="space-y-2 font-mono text-xs">
+              <div class="p-6 text-center text-slate-600">No report generated yet. Run the log cleaner to parse.</div>
+            </div>
+          </div>
+
+          <!-- Cleaned Log Output Preview -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+              <span class="text-xs font-mono font-bold text-slate-200">Trimmed Log Preview & Backup Verification</span>
+              <span class="text-xs font-mono text-slate-500">Auto-saved to *.bak</span>
+            </div>
+            <pre id="cleaned-log-preview" class="p-3 bg-slate-950 rounded-xl text-[11px] font-mono text-slate-400 max-h-48 overflow-y-auto whitespace-pre-wrap">Run log cleaner above to inspect output.</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 5: BASH SCRIPT INSPECTOR & REPOSITORY -->
+    <section id="view-scripts" class="hidden p-6 space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-800 gap-3">
+          <div>
+            <h3 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+              <i data-lucide="file-code" class="w-5 h-5 text-emerald-400"></i> Project Source Scripts
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">Inspect, copy, or download the full bash source scripts for your project submission.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="copyActiveScript()" class="px-3 py-1.5 text-xs font-mono bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition flex items-center gap-1.5">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Script
+            </button>
+            <button onclick="downloadActiveScript()" class="px-3 py-1.5 text-xs font-mono bg-emerald-600 hover:bg-emerald-500 text-slate-900 font-bold rounded-lg transition flex items-center gap-1.5">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i> Export .sh
+            </button>
+          </div>
+        </div>
+
+        <!-- Script Selector Tabs -->
+        <div class="flex flex-wrap gap-2 pt-4 border-b border-slate-800 pb-3" id="script-pills">
+          <button onclick="showScript('file_organizer')" id="pill-file_organizer" class="script-pill px-3 py-1.5 text-xs font-mono rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+            file_organizer.sh
+          </button>
+          <button onclick="showScript('backup_auto')" id="pill-backup_auto" class="script-pill px-3 py-1.5 text-xs font-mono rounded-lg bg-slate-800 text-slate-400 border border-slate-700 hover:text-slate-200">
+            backup_auto.sh
+          </button>
+          <button onclick="showScript('log_cleaner')" id="pill-log_cleaner" class="script-pill px-3 py-1.5 text-xs font-mono rounded-lg bg-slate-800 text-slate-400 border border-slate-700 hover:text-slate-200">
+            log_cleaner.sh
+          </button>
+          <button onclick="showScript('health_monitor')" id="pill-health_monitor" class="script-pill px-3 py-1.5 text-xs font-mono rounded-lg bg-slate-800 text-slate-400 border border-slate-700 hover:text-slate-200">
+            health_monitor.sh
+          </button>
+          <button onclick="showScript('toolkit')" id="pill-toolkit" class="script-pill px-3 py-1.5 text-xs font-mono rounded-lg bg-slate-800 text-slate-400 border border-slate-700 hover:text-slate-200">
+            toolkit.sh
+          </button>
+        </div>
+
+        <!-- Code Block Viewer -->
+        <div class="relative mt-4">
+          <div class="absolute top-3 right-3 text-xs font-mono text-slate-500 bg-slate-900/80 px-2 py-1 rounded">
+            Bash / POSIX
+          </div>
+          <pre id="script-code-display" class="bg-slate-950 border border-slate-800 p-4 rounded-xl text-xs font-mono text-slate-300 overflow-x-auto max-h-[500px] leading-relaxed selection:bg-emerald-500 selection:text-slate-950"></pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Interactive Terminal Simulation Modal -->
+  <div id="terminal-modal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-3xl rounded-2xl overflow-hidden shadow-2xl flex flex-col">
+      <!-- Terminal Header -->
+      <div class="bg-slate-950 px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <div class="w-3 h-3 rounded-full bg-rose-500/80"></div>
+          <div class="w-3 h-3 rounded-full bg-amber-500/80"></div>
+          <div class="w-3 h-3 rounded-full bg-emerald-500/80"></div>
+          <span class="text-xs font-mono text-slate-400 ml-2">gladwin@gladwin-MS-7D90: ~/sysadmin_toolkit</span>
+        </div>
+        <button onclick="toggleTerminalModal()" class="text-slate-500 hover:text-slate-200">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Terminal Body -->
+      <div id="term-output" class="bg-slate-950 p-4 font-mono text-xs text-slate-300 h-96 overflow-y-auto space-y-1">
+        <p class="text-slate-500">Sysadmin Toolkit Virtual Shell Emulator v1.0.4</p>
+        <p class="text-slate-500">Type <span class="text-emerald-400">./toolkit.sh</span> or <span class="text-emerald-400">help</span> to interact.</p>
+        <p class="text-slate-500">----------------------------------------------------</p>
+      </div>
+
+      <!-- Terminal Input Line -->
+      <div class="bg-slate-900 p-3 border-t border-slate-800 flex items-center gap-2">
+        <span class="text-emerald-400 font-mono text-xs font-bold">gladwin@MS-7D90:~$</span>
+        <input type="text" id="term-input" onkeydown="handleTerminalCommand(event)" placeholder="e.g. ./toolkit.sh, ls -la, ./health_monitor.sh" class="flex-1 bg-transparent border-none text-xs font-mono text-slate-200 focus:outline-none">
+      </div>
+    </div>
+  </div>
+
+  <!-- Git Push Authentication Modal -->
+  <div id="git-modal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2 text-emerald-400">
+          <i data-lucide="key" class="w-5 h-5"></i>
+          <h3 class="text-sm font-bold text-slate-100">Fixing Git Push Authentication</h3>
+        </div>
+        <button onclick="closeModal('git-modal')" class="text-slate-500 hover:text-slate-200">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs text-slate-300">
+        <p>GitHub removed password authentication. When prompted for password in terminal, supply a <strong>Personal Access Token (PAT)</strong>:</p>
+        <ol class="list-decimal pl-5 space-y-1.5 text-slate-400">
+          <li>GitHub &rarr; <span class="text-slate-200">Settings</span> &rarr; <span class="text-slate-200">Developer settings</span>.</li>
+          <li>Select <span class="text-slate-200">Personal access tokens</span> &rarr; <span class="text-slate-200">Tokens (classic)</span>.</li>
+          <li>Click <span class="text-slate-200">Generate new token</span> and check the <code class="text-emerald-400">repo</code> checkbox.</li>
+          <li>Copy the token string (<code class="text-emerald-400">ghp_...</code>) and paste it as the password in your terminal.</li>
+        </ol>
+
+        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 text-[11px] font-mono text-slate-400">
+          <span class="text-slate-500"># Cache credentials permanently so you never have to re-enter:</span><br>
+          <span class="text-emerald-400">git config --global credential.helper store</span>
+        </div>
+      </div>
+
+      <button onclick="closeModal('git-modal')" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-mono transition">
+        Understood
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Audio synthesizer initialization (Tone.js)
+    let audioMuted = true;
+    let synth = null;
+
+    function toggleAudio() {
+      audioMuted = !audioMuted;
+      const icon = document.getElementById('audio-icon');
+      if (audioMuted) {
+        icon.setAttribute('data-lucide', 'volume-x');
+        showToast("Audio notifications muted");
+      } else {
+        icon.setAttribute('data-lucide', 'volume-2');
+        if (!synth && window.Tone) {
+          Tone.start();
+          synth = new Tone.Synth({
+            oscillator: { type: "sine" },
+            envelope: { attack: 0.005, decay: 0.1, sustain: 0, release: 0.1 }
+          }).toDestination();
+        }
+        showToast("Audio feedback enabled");
+      }
+      lucide.createIcons();
+    }
+
+    function playBeep(note = "C5") {
+      if (!audioMuted && synth) {
+        try {
+          synth.triggerAttackRelease(note, "16n");
+        } catch(e) {}
+      }
+    }
+
+    // UI Toast Notification helper
+    function showToast(message) {
+      const banner = document.getElementById('toast-banner');
+      const text = document.getElementById('toast-text');
+      text.textContent = message;
+      banner.classList.remove('hidden');
+      setTimeout(() => {
+        banner.classList.add('hidden');
+      }, 4000);
+    }
+
+    function hideToast() {
+      document.getElementById('toast-banner').classList.add('hidden');
+    }
+
+    function showModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    // Tab Navigation Switcher
+    function switchTab(tabId) {
+      const tabs = ['health', 'organizer', 'backup', 'logs', 'scripts'];
+      tabs.forEach(t => {
+        const view = document.getElementById(`view-${t}`);
+        const nav = document.getElementById(`nav-${t}`);
+        if (t === tabId) {
+          view.classList.remove('hidden');
+          nav.classList.add('text-emerald-400', 'bg-slate-800/80', 'border', 'border-slate-700');
+          nav.classList.remove('text-slate-400');
+        } else {
+          view.classList.add('hidden');
+          nav.classList.remove('text-emerald-400', 'bg-slate-800/80', 'border', 'border-slate-700');
+          nav.classList.add('text-slate-400');
+        }
+      });
+
+      // Update Section Header Title
+      const headerTitle = document.getElementById('section-title');
+      const titles = {
+        health: `<i data-lucide="activity" class="w-5 h-5 text-emerald-400"></i> System Health Monitor`,
+        organizer: `<i data-lucide="folder-cog" class="w-5 h-5 text-emerald-400"></i> Bulk File Organizer`,
+        backup: `<i data-lucide="hard-drive-download" class="w-5 h-5 text-emerald-400"></i> Backup Automation Manager`,
+        logs: `<i data-lucide="file-text" class="w-5 h-5 text-emerald-400"></i> Log Cleaner & Report Generator`,
+        scripts: `<i data-lucide="code" class="w-5 h-5 text-emerald-400"></i> Project Source Scripts`
+      };
+      headerTitle.innerHTML = titles[tabId];
+      lucide.createIcons();
+    }
+
+    // --- System Health Telemetry ---
+    let healthChart;
+    let cpuCurrent = 24;
+    let ramCurrent = 42;
+    let diskCurrent = 58;
+    const maxDataPoints = 18;
+
+    function initHealthChart() {
+      const ctx = document.getElementById('healthChart').getContext('2d');
+      const labels = Array.from({ length: maxDataPoints }, (_, i) => `${(maxDataPoints - i) * 2}s ago`);
+
+      healthChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'CPU %',
+              data: Array(maxDataPoints).fill(cpuCurrent),
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              tension: 0.35,
+              fill: true,
+              borderWidth: 2
+            },
+            {
+              label: 'RAM %',
+              data: Array(maxDataPoints).fill(ramCurrent),
+              borderColor: '#38bdf8',
+              backgroundColor: 'rgba(56, 189, 248, 0.05)',
+              tension: 0.35,
+              borderWidth: 2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: { color: '#94a3b8', font: { family: 'JetBrains Mono', size: 11 } }
+            }
+          },
+          scales: {
+            y: {
+              min: 0,
+              max: 100,
+              grid: { color: 'rgba(51, 65, 85, 0.4)' },
+              ticks: { color: '#64748b', font: { family: 'JetBrains Mono' }, callback: v => v + '%' }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { color: '#64748b', font: { family: 'JetBrains Mono' } }
+            }
+          }
+        }
+      });
+    }
+
+    function appendWatchdogLog(cpu, ram, disk) {
+      const stream = document.getElementById('watchdog-log-stream');
+      const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+      let status = "OK";
+      let alertMsg = "";
+
+      if (cpu >= 80) alertMsg += " [CPU >= 80%]";
+      if (ram >= 80) alertMsg += " [RAM >= 80%]";
+      if (disk >= 85) alertMsg += " [DISK >= 85%]";
+      if (alertMsg !== "") status = "WARNING";
+
+      const p = document.createElement('p');
+      const isWarn = status === "WARNING";
+      p.className = isWarn ? "text-amber-400 font-semibold" : "text-slate-400";
+      p.innerHTML = `<span class="text-slate-600">${now}</span> | CPU: ${cpu}% | RAM: ${ram}% | DISK: ${disk}% | <span class="${isWarn ? 'text-rose-400' : 'text-emerald-400'}">${status}</span>${alertMsg}`;
+      stream.prepend(p);
+
+      if (stream.children.length > 25) {
+        stream.removeChild(stream.lastChild);
+      }
+    }
+
+    function clearWatchdogLog() {
+      document.getElementById('watchdog-log-stream').innerHTML = '';
+      showToast("Watchdog log stream cleared");
+    }
+
+    function updateTelemetry() {
+      // Natural jitter
+      const cpuDelta = (Math.random() * 8) - 4;
+      cpuCurrent = Math.min(Math.max(Math.round(cpuCurrent + cpuDelta), 8), 98);
+
+      const ramDelta = (Math.random() * 4) - 2;
+      ramCurrent = Math.min(Math.max(Math.round(ramCurrent + ramDelta), 30), 95);
+
+      // Update UI cards
+      document.getElementById('val-cpu').textContent = `${cpuCurrent}%`;
+      document.getElementById('bar-cpu').style.width = `${cpuCurrent}%`;
+      const cpuStatus = document.getElementById('badge-cpu-status');
+      if (cpuCurrent >= 80) {
+        cpuStatus.textContent = "CRITICAL";
+        cpuStatus.className = "px-2 py-0.5 rounded text-xs font-mono bg-rose-500/20 text-rose-300 border border-rose-500/30";
+        document.getElementById('bar-cpu').className = "bg-rose-500 h-2 rounded-full transition-all duration-700";
+        playBeep("A4");
+      } else {
+        cpuStatus.textContent = "Normal";
+        cpuStatus.className = "px-2 py-0.5 rounded text-xs font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
+        document.getElementById('bar-cpu').className = "bg-emerald-500 h-2 rounded-full transition-all duration-700";
+      }
+
+      document.getElementById('val-ram').textContent = `${ramCurrent}%`;
+      document.getElementById('bar-ram').style.width = `${ramCurrent}%`;
+
+      // Update chart
+      if (healthChart) {
+        healthChart.data.datasets[0].data.shift();
+        healthChart.data.datasets[0].data.push(cpuCurrent);
+
+        healthChart.data.datasets[1].data.shift();
+        healthChart.data.datasets[1].data.push(ramCurrent);
+
+        healthChart.update('none');
+      }
+
+      appendWatchdogLog(cpuCurrent, ramCurrent, diskCurrent);
+    }
+
+    function injectLoadSpike() {
+      cpuCurrent = 92;
+      ramCurrent = 85;
+      updateTelemetry();
+      showToast("Spike simulated: Thresholds triggered");
+      playBeep("F5");
+    }
+
+    // --- Bulk File Organizer Virtual FS ---
+    const initialFiles = [
+      { name: "a.jpg", type: "Images", date: "2026-08", size: "2.4 MB" },
+      { name: "b.png", type: "Images", date: "2026-08", size: "1.1 MB" },
+      { name: "report.pdf", type: "Documents", date: "2026-09", size: "480 KB" },
+      { name: "notes.txt", type: "Documents", date: "2026-09", size: "14 KB" },
+      { name: "song.mp3", type: "Audio", date: "2026-07", size: "6.8 MB" },
+      { name: "movie.mp4", type: "Videos", date: "2026-05", size: "142 MB" },
+      { name: "backup.zip", type: "Archives", date: "2026-10", size: "38 MB" },
+      { name: "script.sh", type: "Code", date: "2026-10", size: "3.2 KB" },
+      { name: "random.xyz", type: "Others", date: "2026-10", size: "12 KB" }
+    ];
+
+    let currentVirtualFiles = [...initialFiles];
+
+    function renderVirtualFiles() {
+      const container = document.getElementById('unorganized-files-container');
+      const counter = document.getElementById('raw-file-count');
+      container.innerHTML = '';
+      counter.textContent = `${currentVirtualFiles.length} file(s)`;
+
+      if (currentVirtualFiles.length === 0) {
+        container.innerHTML = `<p class="p-6 text-center text-xs font-mono text-slate-500">Folder is empty. Click "Seed ~/messy Folder" to populate.</p>`;
+        return;
+      }
+
+      currentVirtualFiles.forEach(f => {
+        const item = document.createElement('div');
+        item.className = "flex items-center justify-between p-2.5 bg-slate-950/80 rounded-lg border border-slate-800 text-xs font-mono text-slate-300";
+        item.innerHTML = `
+          <div class="flex items-center space-x-2.5">
+            <i data-lucide="file" class="w-3.5 h-3.5 text-slate-400"></i>
+            <span class="font-medium">${f.name}</span>
+          </div>
+          <div class="flex items-center gap-3 text-slate-500">
+            <span>${f.date}</span>
+            <span class="text-slate-400">${f.size}</span>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+      lucide.createIcons();
+    }
+
+    function populateMessyFolder() {
+      currentVirtualFiles = [...initialFiles];
+      document.getElementById('organized-tree-container').innerHTML = `
+        <div class="p-8 text-center text-slate-600 font-mono text-xs">
+          Files reset in ~/messy. Click "Run ./file_organizer.sh" to organize.
+        </div>`;
+      document.getElementById('org-status-badge').textContent = "Pending";
+      renderVirtualFiles();
+      showToast("Populated ~/messy with mock files");
+    }
+
+    function resetVirtualFS() {
+      currentVirtualFiles = [];
+      document.getElementById('organized-tree-container').innerHTML = `
+        <div class="p-8 text-center text-slate-600 font-mono text-xs">Folder cleared.</div>`;
+      renderVirtualFiles();
+      showToast("Directory cleared");
+    }
+
+    function executeFileOrganizer() {
+      if (currentVirtualFiles.length === 0) {
+        showToast("Directory is empty. Click 'Seed ~/messy' first.");
+        return;
+      }
+
+      const mode = document.getElementById('org-mode-select').value;
+      const targetFolder = document.getElementById('org-folder-input').value;
+      const treeContainer = document.getElementById('organized-tree-container');
+      const badge = document.getElementById('org-status-badge');
+
+      badge.textContent = "Organizing...";
+      badge.className = "text-xs font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400";
+      treeContainer.innerHTML = `<div class="p-4 text-xs font-mono text-slate-400">Processing files in ${targetFolder}...</div>`;
+
+      // Group files
+      const groups = {};
+      currentVirtualFiles.forEach(f => {
+        let key = "";
+        if (mode === "date") {
+          key = f.date; // e.g. 2026-10
+        } else {
+          key = f.type; // Images, Documents, etc.
+        }
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(f);
+      });
+
+      setTimeout(() => {
+        treeContainer.innerHTML = '';
+        Object.keys(groups).sort().forEach(groupName => {
+          const groupCard = document.createElement('div');
+          groupCard.className = "bg-slate-950 border border-slate-800 rounded-xl p-3";
+          
+          let fileListHtml = groups[groupName].map(f => `
+            <div class="flex items-center justify-between py-1 text-slate-400 hover:text-slate-200">
+              <span class="flex items-center gap-2">
+                <i data-lucide="corner-down-right" class="w-3 h-3 text-emerald-500"></i>
+                ${f.name}
+              </span>
+              <span class="text-slate-600 text-[10px]">${f.size}</span>
+            </div>
+          `).join('');
+
+          groupCard.innerHTML = `
+            <div class="flex items-center justify-between text-emerald-400 font-bold mb-2 pb-1 border-b border-slate-800/80">
+              <div class="flex items-center gap-1.5">
+                <i data-lucide="folder" class="w-3.5 h-3.5"></i>
+                <span>${targetFolder}/${groupName}/</span>
+              </div>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-900 text-slate-400">${groups[groupName].length} items</span>
+            </div>
+            <div class="pl-2 space-y-1">
+              ${fileListHtml}
+            </div>
+          `;
+          treeContainer.appendChild(groupCard);
+        });
+
+        badge.textContent = `Completed (${currentVirtualFiles.length} files moved)`;
+        showToast(`Organized ${currentVirtualFiles.length} files by ${mode}`);
+        playBeep("G5");
+        lucide.createIcons();
+      }, 600);
+    }
+
+    // --- Backup Automation Simulator ---
+    let backupArchives = [
+      { name: "backup_20260920_120000.tar.gz", size: "48M", ageDays: 8, compressed: true },
+      { name: "backup_20260928_093000.tar.gz", size: "52M", ageDays: 3, compressed: true },
+      { name: "backup_20260930_184512.tar", size: "118M", ageDays: 1, compressed: false }
+    ];
+
+    function renderBackupTable() {
+      const tbody = document.getElementById('backup-table-body');
+      tbody.innerHTML = '';
+      document.getElementById('backup-badge-count').textContent = backupArchives.length;
+
+      if (backupArchives.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-500">No backup archives found in destination folder.</td></tr>`;
+        return;
+      }
+
+      backupArchives.forEach((b, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-800/30";
+        tr.innerHTML = `
+          <td class="py-2.5 font-bold flex items-center gap-2 text-slate-200">
+            <i data-lucide="${b.compressed ? 'file-archive' : 'file'}" class="w-3.5 h-3.5 ${b.compressed ? 'text-emerald-400' : 'text-amber-400'}"></i>
+            ${b.name}
+          </td>
+          <td class="py-2.5 text-slate-400">${b.size}</td>
+          <td class="py-2.5 text-slate-400">${b.ageDays} day(s) ago</td>
+          <td class="py-2.5">
+            <span class="px-2 py-0.5 rounded text-[10px] ${b.compressed ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/10 text-amber-300 border border-amber-500/30'}">
+              ${b.compressed ? '.tar.gz' : '.tar (uncompressed)'}
+            </span>
+          </td>
+          <td class="py-2.5 text-right">
+            <button onclick="deleteSingleBackup(${idx})" class="text-rose-400 hover:text-rose-300 p-1">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      lucide.createIcons();
+    }
+
+    function appendBackupLog(msg) {
+      const tail = document.getElementById('backup-log-tail');
+      const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+      const p = document.createElement('p');
+      p.textContent = `[${now}] ${msg}`;
+      tail.prepend(p);
+    }
+
+    function executeBackupJob() {
+      const src = document.getElementById('backup-src').value;
+      const dest = document.getElementById('backup-dest').value;
+      const compressDays = parseInt(document.getElementById('backup-compress-days').value) || 1;
+      const deleteDays = parseInt(document.getElementById('backup-delete-days').value) || 7;
+
+      appendBackupLog(`=== Backup started: ${src} ===`);
+
+      // 1. Create backup
+      const stamp = new Date().toISOString().replace(/[-:T]/g, '').substring(0, 15);
+      const newArchive = {
+        name: `backup_${stamp}.tar`,
+        size: "114M",
+        ageDays: 0,
+        compressed: false
+      };
+      backupArchives.unshift(newArchive);
+      appendBackupLog(`Created backup: ${newArchive.name} (${newArchive.size})`);
+
+      // 2. Compress old (.tar older than compressDays)
+      let compressedCount = 0;
+      backupArchives.forEach(b => {
+        if (!b.compressed && b.ageDays >= compressDays) {
+          b.compressed = true;
+          b.name += ".gz";
+          b.size = "49M";
+          compressedCount++;
+          appendBackupLog(`Compressed: ${b.name}`);
+        }
+      });
+      appendBackupLog(`Compressed ${compressedCount} old backup(s)`);
+
+      // 3. Delete expired (.tar.gz older than deleteDays)
+      const beforeCount = backupArchives.length;
+      backupArchives = backupArchives.filter(b => !(b.compressed && b.ageDays > deleteDays));
+      const deletedCount = beforeCount - backupArchives.length;
+      appendBackupLog(`Deleted ${deletedCount} expired backup(s)`);
+      appendBackupLog(`=== Backup finished ===`);
+
+      renderBackupTable();
+      showToast(`Backup created in ${dest}! (${compressedCount} compressed, ${deletedCount} pruned)`);
+      playBeep("C6");
+    }
+
+    function simulateOldBackups() {
+      backupArchives.forEach(b => b.ageDays += 3);
+      renderBackupTable();
+      showToast("Advanced simulation time: Archives aged by 3 days");
+    }
+
+    function deleteSingleBackup(index) {
+      const removed = backupArchives.splice(index, 1)[0];
+      appendBackupLog(`Manual deletion: ${removed.name}`);
+      renderBackupTable();
+      showToast(`Deleted ${removed.name}`);
+    }
+
+    // --- Log Cleaner & Reporter Simulation ---
+    const sampleLogEntries = [
+      "2026-10-01 19:14:02 INFO System booted up normally",
+      "2026-10-01 19:15:33 WARN High database connection pool usage",
+      "2026-10-01 19:18:11 ERROR Connection refused on port 5432",
+      "2026-09-30 08:22:15 ERROR Disk I/O threshold exceeded",
+      "2026-09-30 11:45:00 WARN High database connection pool usage",
+      "2026-09-29 14:10:02 INFO Cron task completed successfully",
+      "2026-09-27 10:00:00 ERROR Connection refused on port 5432",
+      "2026-09-25 04:30:19 WARN Memory allocation delay detected",
+      "2026-09-20 02:11:00 ERROR SSL handshake failure client IP 192.168.1.45",
+      "2026-09-18 12:00:00 INFO Service worker restarted",
+      "2026-09-15 09:12:44 ERROR Connection refused on port 5432",
+      "2026-09-10 18:20:00 WARN Disk cleanup scheduled soon",
+      "2026-09-02 22:10:00 ERROR Fatal kernel panic memory page 0x004"
+    ];
+
+    function loadSampleLogs() {
+      document.getElementById('raw-log-input').value = sampleLogEntries.join('\n');
+      showToast("Sample server log loaded");
+    }
+
+    function executeLogCleaner() {
+      const raw = document.getElementById('raw-log-input').value.trim();
+      const days = parseInt(document.getElementById('log-retention-days').value) || 7;
+      const targetFile = document.getElementById('log-target-path').value;
+
+      if (!raw) {
+        showToast("Log input is empty! Click 'Load Sample Log'.");
+        return;
+      }
+
+      const lines = raw.split('\n').filter(l => l.trim().length > 0);
+      const beforeCount = lines.length;
+
+      // Compute Cutoff Date (days ago)
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - days);
+      const cutoffStr = cutoffDate.toISOString().substring(0, 10);
+
+      // Filter: ISO comparison ($1 >= cutoff)
+      const keptLines = lines.filter(line => {
+        const lineDate = line.substring(0, 10);
+        return lineDate >= cutoffStr;
+      });
+
+      const afterCount = keptLines.length;
+      const removedCount = beforeCount - afterCount;
+
+      // Count Errors & Warnings in kept lines
+      let errCount = 0;
+      let warnCount = 0;
+      const issuesFreq = {};
+
+      keptLines.forEach(line => {
+        if (line.includes(' ERROR ')) errCount++;
+        if (line.includes(' WARN')) warnCount++;
+
+        if (line.includes(' ERROR ') || line.includes(' WARN')) {
+          // Remove timestamp (first 2 columns) like awk '{ $1=""; $2=""; print }'
+          const parts = line.split(' ');
+          const messageOnly = parts.slice(2).join(' ').trim();
+          issuesFreq[messageOnly] = (issuesFreq[messageOnly] || 0) + 1;
+        }
+      });
+
+      // Update Metric Numbers
+      document.getElementById('metric-lines-before').textContent = beforeCount;
+      document.getElementById('metric-lines-after').textContent = afterCount;
+      document.getElementById('metric-errors-count').textContent = errCount;
+      document.getElementById('metric-warns-count').textContent = warnCount;
+
+      // Render Top Recurring
+      const sortedIssues = Object.entries(issuesFreq).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      const issuesContainer = document.getElementById('recurring-issues-container');
+      issuesContainer.innerHTML = '';
+
+      if (sortedIssues.length === 0) {
+        issuesContainer.innerHTML = `<p class="text-xs text-slate-500 py-2">No errors or warnings found in retained period.</p>`;
+      } else {
+        sortedIssues.forEach(([msg, count]) => {
+          const isErr = msg.startsWith('ERROR');
+          const row = document.createElement('div');
+          row.className = "flex items-center justify-between p-2.5 bg-slate-950 rounded-lg border border-slate-800";
+          row.innerHTML = `
+            <div class="flex items-center gap-2 truncate pr-2">
+              <span class="px-1.5 py-0.5 rounded text-[10px] ${isErr ? 'bg-rose-500/20 text-rose-300' : 'bg-amber-500/20 text-amber-300'}">${isErr ? 'ERROR' : 'WARN'}</span>
+              <span class="text-slate-300 truncate">${msg.replace(/^(ERROR|WARN)\s*/, '')}</span>
+            </div>
+            <span class="text-xs font-bold text-slate-400 px-2 py-0.5 bg-slate-900 rounded">${count}x</span>
+          `;
+          issuesContainer.appendChild(row);
+        });
+      }
+
+      // Update Preview
+      document.getElementById('cleaned-log-preview').textContent = 
+`=========== LOG REPORT ===========
+File          : ${targetFile}
+Keep since    : ${cutoffStr} (last ${days} days)
+Lines before  : ${beforeCount}
+Lines after   : ${afterCount}
+Removed       : ${removedCount}
+----------------------------------
+Errors        : ${errCount}
+Warnings      : ${warnCount}
+==================================
+Backup created: ${targetFile}.bak
+
+--- TRIMMED CONTENT PREVIEW ---
+${keptLines.join('\n')}`;
+
+      showToast(`Cleaned: ${removedCount} outdated lines removed`);
+      playBeep("E5");
+    }
+
+    // --- Bash Scripts Content Storage ---
+    const scriptsDatabase = {
+      file_organizer: `#!/bin/bash
+# file_organizer.sh - sorts files in a folder by type or by date
+# Usage: ./file_organizer.sh [folder] [type|date]
+
+FOLDER="\${1:-$HOME/Downloads}"
+MODE="\${2:-type}"
+
+if [ ! -d "$FOLDER" ]; then
+    echo "Error: $FOLDER does not exist"
+    exit 1
+fi
+
+echo "Organizing $FOLDER by $MODE ..."
+count=0
+
+for file in "$FOLDER"/*; do
+    # skip folders
+    [ -f "$file" ] || continue
+
+    name=$(basename "$file")
+
+    if [ "$MODE" = "date" ]; then
+        # folder named like 2026-10
+        target=$(date -r "$file" +%Y-%m)
+    else
+        ext="\${name##*.}"
+        ext=$(echo "$ext" | tr 'A-Z' 'a-z')
+        case "$ext" in
+            jpg|jpeg|png|gif|bmp|webp)   target="Images" ;;
+            pdf|doc|docx|txt|odt|pptx)   target="Documents" ;;
+            mp3|wav|flac|aac)            target="Audio" ;;
+            mp4|mkv|avi|mov)             target="Videos" ;;
+            zip|tar|gz|rar|7z)           target="Archives" ;;
+            sh|py|c|cpp|java|js)         target="Code" ;;
+            *)                           target="Others" ;;
+        esac
+    fi
+
+    mkdir -p "$FOLDER/$target"
+    mv -n "$file" "$FOLDER/$target/"     # -n = never overwrite
+    echo "Moved: $name -> $target/"
+    count=$((count + 1))
+done
+
+echo "Done. $count file(s) organized."`,
+
+      backup_auto: `#!/usr/bin/env bash
+# backup_auto.sh - timestamped backups with compression, rotation and logging
+# Usage: ./backup_auto.sh <source_dir> <backup_dir>
+
+set -euo pipefail
+
+SOURCE_DIR="\${1:?Usage: $0 <source_dir> <backup_dir>}"
+BACKUP_DIR="\${2:?Usage: $0 <source_dir> <backup_dir>}"
+COMPRESS_AFTER_DAYS=1     # gzip plain .tar backups older than this
+DELETE_AFTER_DAYS=7       # remove compressed backups older than this
+LOG_FILE="$BACKUP_DIR/backup.log"
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"
+}
+
+validate() {
+    [[ -d "$SOURCE_DIR" ]] || { echo "Source not found: $SOURCE_DIR"; exit 1; }
+    mkdir -p "$BACKUP_DIR"
+}
+
+create_backup() {
+    local stamp archive
+    stamp=$(date +%Y%m%d_%H%M%S)
+    archive="$BACKUP_DIR/backup_\${stamp}.tar"
+    tar -cf "$archive" -C "$(dirname "$SOURCE_DIR")" "$(basename "$SOURCE_DIR")"
+    log "Created backup: $(basename "$archive") ($(du -h "$archive" | cut -f1))"
+}
+
+compress_old() {
+    local n=0
+    while IFS= read -r -d '' f; do
+        gzip "$f" && log "Compressed: $(basename "$f")"
+        n=$((n + 1))
+    done < <(find "$BACKUP_DIR" -name "*.tar" -mtime +"$COMPRESS_AFTER_DAYS" -print0)
+    log "Compressed $n old backup(s)"
+}
+
+delete_expired() {
+    local n
+    n=$(find "$BACKUP_DIR" -name "*.tar.gz" -mtime +"$DELETE_AFTER_DAYS" -print -delete | wc -l)
+    log "Deleted $n expired backup(s)"
+}
+
+main() {
+    validate
+    log "=== Backup started: $SOURCE_DIR ==="
+    create_backup
+    compress_old
+    delete_expired
+    log "=== Backup finished ==="
+}
+
+main`,
+
+      log_cleaner: `#!/bin/bash
+# log_cleaner.sh - removes old log entries and prints an error/warning report
+# Expects log lines starting with: YYYY-MM-DD HH:MM:SS LEVEL message
+# Usage: ./log_cleaner.sh -f <logfile> [-d days]
+
+DAYS=7
+LOGFILE=""
+
+usage() {
+    echo "Usage: $0 -f <logfile> [-d days_to_keep]"
+    exit 1
+}
+
+while getopts "f:d:h" opt; do
+    case $opt in
+        f) LOGFILE="$OPTARG" ;;
+        d) DAYS="$OPTARG" ;;
+        *) usage ;;
+    esac
+done
+
+[ -z "$LOGFILE" ] && usage
+[ -f "$LOGFILE" ] || { echo "File not found: $LOGFILE"; exit 1; }
+
+CUTOFF=$(date -d "$DAYS days ago" +%Y-%m-%d)
+TMP=$(mktemp)
+BEFORE=$(wc -l < "$LOGFILE")
+
+# keep only lines whose date >= cutoff (ISO dates compare correctly as strings)
+awk -v cutoff="$CUTOFF" '$1 >= cutoff' "$LOGFILE" > "$TMP"
+cp "$LOGFILE" "$LOGFILE.bak"     # safety copy
+mv "$TMP" "$LOGFILE"
+
+AFTER=$(wc -l < "$LOGFILE")
+
+echo "=========== LOG REPORT ==========="
+echo "File          : $LOGFILE"
+echo "Keep since    : $CUTOFF (last $DAYS days)"
+echo "Lines before  : $BEFORE"
+echo "Lines after   : $AFTER"
+echo "Removed       : $((BEFORE - AFTER))"
+echo "----------------------------------"
+echo "Errors        : $(grep -c ' ERROR ' "$LOGFILE")"
+echo "Warnings      : $(grep -c ' WARN' "$LOGFILE")"
+echo "----------------------------------"
+echo "Top recurring errors/warnings:"
+grep -E ' (ERROR|WARN)' "$LOGFILE" \\
+    | awk '{ $1=""; $2=""; print }' \\
+    | sort | uniq -c | sort -rn | head -5
+echo "=================================="
+echo "Backup of original saved as $LOGFILE.bak"`,
+
+      health_monitor: `#!/bin/bash
+# ================================================
+#  health_monitor.sh - CPU / RAM / Disk watchdog
+#  Run manually or via cron
+# ================================================
+
+# ---------- CONFIG ----------
+CPU_LIMIT=80
+RAM_LIMIT=80
+DISK_LIMIT=85
+LOG_FILE="$HOME/health_monitor.log"
+# ----------------------------
+
+TIME=$(date '+%Y-%m-%d %H:%M:%S')
+
+# CPU: sample /proc/stat twice, one second apart
+read -r _ u1 n1 s1 i1 w1 q1 sq1 _ < /proc/stat
+sleep 1
+read -r _ u2 n2 s2 i2 w2 q2 sq2 _ < /proc/stat
+idle1=$((i1 + w1));   idle2=$((i2 + w2))
+total1=$((u1 + n1 + s1 + i1 + w1 + q1 + sq1))
+total2=$((u2 + n2 + s2 + i2 + w2 + q2 + sq2))
+CPU=$(( 100 * ( (total2 - total1) - (idle2 - idle1) ) / (total2 - total1) ))
+
+# RAM %
+RAM=$(free | awk '/Mem:/ {printf "%d", $3/$2 * 100}')
+
+# Disk % of root partition
+DISK=$(df / | awk 'NR==2 {gsub("%",""); print $5}')
+
+STATUS="OK"
+ALERTS=""
+
+check() {   # name value limit
+    if [ "$2" -ge "$3" ]; then
+        STATUS="WARNING"
+        ALERTS="$ALERTS [$1 at $2% >= $3%]"
+    fi
+}
+
+check "CPU"  "$CPU"  "$CPU_LIMIT"
+check "RAM"  "$RAM"  "$RAM_LIMIT"
+check "DISK" "$DISK" "$DISK_LIMIT"
+
+LINE="$TIME | CPU: \${CPU}% | RAM: \${RAM}% | DISK: \${DISK}% | $STATUS$ALERTS"
+echo "$LINE"
+echo "$LINE" >> "$LOG_FILE"
+
+[ "$STATUS" = "WARNING" ] && echo "*** ALERT: resource usage critical! ***"`,
+
+      toolkit: `#!/bin/bash
+# toolkit.sh - menu launcher for the 4 scripts
+DIR="$(cd "$(dirname "$0")" && pwd)"
+
+while true; do
+    echo
+    echo "======== SYSADMIN TOOLKIT ========"
+    echo "1) Bulk File Organizer"
+    echo "2) Backup Automation"
+    echo "3) Log Cleaner & Report"
+    echo "4) System Health Monitor"
+    echo "5) Exit"
+    echo "=================================="
+    read -rp "Choose an option: " choice
+
+    case $choice in
+        1)
+            read -rp "Folder to organize: " f
+            read -rp "Mode (type/date): " m
+            "$DIR/file_organizer.sh" "$f" "$m"
+            ;;
+        2)
+            read -rp "Source folder: " s
+            read -rp "Backup folder: " b
+            "$DIR/backup_auto.sh" "$s" "$b"
+            ;;
+        3)
+            read -rp "Log file: " l
+            read -rp "Days to keep: " d
+            "$DIR/log_cleaner.sh" -f "$l" -d "$d"
+            ;;
+        4)
+            "$DIR/health_monitor.sh"
+            ;;
+        5)
+            echo "Goodbye!"; exit 0
+            ;;
+        *)
+            echo "Invalid option"
+            ;;
+    esac
+done`
+    };
+
+    let activeScriptKey = 'file_organizer';
+
+    function showScript(key) {
+      activeScriptKey = key;
+      document.getElementById('script-code-display').textContent = scriptsDatabase[key];
+
+      // Update pills
+      document.querySelectorAll('.script-pill').forEach(btn => {
+        btn.className = "script-pill px-3 py-1.5 text-xs font-mono rounded-lg bg-slate-800 text-slate-400 border border-slate-700 hover:text-slate-200";
+      });
+      const activeBtn = document.getElementById(`pill-${key}`);
+      if (activeBtn) {
+        activeBtn.className = "script-pill px-3 py-1.5 text-xs font-mono rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold";
+      }
+    }
+
+    function copyActiveScript() {
+      const code = scriptsDatabase[activeScriptKey];
+      const textarea = document.createElement("textarea");
+      textarea.value = code;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      showToast(`Copied ${activeScriptKey}.sh to clipboard`);
+    }
+
+    function downloadActiveScript() {
+      const code = scriptsDatabase[activeScriptKey];
+      const blob = new Blob([code], { type: 'text/x-sh;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${activeScriptKey}.sh`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast(`Exported ${activeScriptKey}.sh`);
+    }
+
+    // --- Interactive Terminal Simulation ---
+    function toggleTerminalModal() {
+      const m = document.getElementById('terminal-modal');
+      m.classList.toggle('hidden');
+      if (!m.classList.contains('hidden')) {
+        document.getElementById('term-input').focus();
+      }
+    }
+
+    function appendTermLine(content, color = "text-slate-300") {
+      const out = document.getElementById('term-output');
+      const p = document.createElement('p');
+      p.className = `${color} whitespace-pre-wrap leading-relaxed`;
+      p.textContent = content;
+      out.appendChild(p);
+      out.scrollTop = out.scrollHeight;
+    }
+
+    function handleTerminalCommand(e) {
+      if (e.key === 'Enter') {
+        const input = document.getElementById('term-input');
+        const cmd = input.value.trim();
+        input.value = '';
+
+        if (!cmd) return;
+
+        appendTermLine(`gladwin@MS-7D90:~$ ${cmd}`, "text-emerald-400 font-bold");
+
+        // Simple shell command processor
+        if (cmd === 'clear') {
+          document.getElementById('term-output').innerHTML = '';
+          return;
+        }
+
+        if (cmd === 'help') {
+          appendTermLine("Available simulated commands:");
+          appendTermLine("  ./toolkit.sh            - Launch interactive text menu");
+          appendTermLine("  ./health_monitor.sh     - Run system watchdog probe once");
+          appendTermLine("  ./file_organizer.sh     - Organize test directory");
+          appendTermLine("  ls, pwd, cd, whoami     - Basic POSIX navigation commands");
+          appendTermLine("  clear                   - Clear terminal screen");
+          return;
+        }
+
+        if (cmd === 'ls' || cmd === 'ls -la') {
+          appendTermLine("-rwxrwxr-x 1 gladwin gladwin 1269 Oct 1 19:16 file_organizer.sh");
+          appendTermLine("-rwxrwxr-x 1 gladwin gladwin 1334 Oct 1 19:18 health_monitor.sh");
+          appendTermLine("-rwxrwxr-x 1 gladwin gladwin 1531 Oct 1 19:18 log_cleaner.sh");
+          appendTermLine("-rwxrwxr-x 1 gladwin gladwin 1820 Oct 1 19:22 backup_auto.sh");
+          appendTermLine("-rwxrwxr-x 1 gladwin gladwin 1104 Oct 1 19:25 toolkit.sh");
+          return;
+        }
+
+        if (cmd === 'pwd') {
+          appendTermLine("/home/gladwin/sysadmin_toolkit");
+          return;
+        }
+
+        if (cmd === 'whoami') {
+          appendTermLine("gladwin");
+          return;
+        }
+
+        if (cmd.startsWith('./health_monitor.sh') || cmd === 'bash health_monitor.sh') {
+          const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+          appendTermLine(`${now} | CPU: ${cpuCurrent}% | RAM: ${ramCurrent}% | DISK: ${diskCurrent}% | OK`, "text-emerald-300");
+          return;
+        }
+
+        if (cmd.startsWith('./file_organizer.sh')) {
+          appendTermLine("Organizing ~/messy by type ...");
+          appendTermLine("Moved: a.jpg -> Images/");
+          appendTermLine("Moved: report.pdf -> Documents/");
+          appendTermLine("Moved: song.mp3 -> Audio/");
+          appendTermLine("Moved: backup.zip -> Archives/");
+          appendTermLine("Done. 4 file(s) organized.", "text-emerald-300");
+          return;
+        }
+
+        if (cmd === './toolkit.sh' || cmd === 'bash toolkit.sh') {
+          appendTermLine(`======== SYSADMIN TOOLKIT ========
+1) Bulk File Organizer
+2) Backup Automation
+3) Log Cleaner & Report
+4) System Health Monitor
+5) Exit
+==================================`, "text-slate-200");
+          appendTermLine("Note: Use the graphical tabs on the left for real-time interactive parameter runs!", "text-amber-400");
+          return;
+        }
+
+        // Generic Fallback
+        appendTermLine(`bash: ${cmd}: command executed. (Simulated POSIX Environment)`);
+      }
+    }
+
+    // Initializer
+    window.onload = function() {
+      lucide.createIcons();
+      initHealthChart();
+      renderVirtualFiles();
+      renderBackupTable();
+      loadSampleLogs();
+      showScript('file_organizer');
+
+      // Kick off continuous live telemetry interval
+      setInterval(updateTelemetry, 2500);
+    };
+  </script>
+</body>
+</html>
